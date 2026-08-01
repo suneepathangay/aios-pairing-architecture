@@ -107,27 +107,27 @@ sequenceDiagram
   participant Cloud as aios-cloud
 
   rect rgb(230, 242, 239)
-    Note over Phone,Box: 1 · Get the box online Bluetooth
-    Box-->>Phone: Advertise BLE + Wi‑Fi list
-    Phone->>Box: Encrypted SSID + password
-    Box->>Box: Join Wi‑Fi
-    Box-->>Phone: LAN IP + provisioning key
+    Note over Phone,Box: 1. Get the box online over Bluetooth
+    Box-->>Phone: Advertise BLE and WiFi list
+    Phone->>Box: Encrypted SSID and password
+    Box->>Box: Join WiFi
+    Box-->>Phone: LAN IP and provisioning key
   end
 
   rect rgb(247, 246, 243)
-    Note over Phone,Cloud: 2 · Bind the box to the user account
-    Phone->>Cloud: Sign in · request pairing code
+    Note over Phone,Cloud: 2. Bind the box to the user account
+    Phone->>Cloud: Sign in and request pairing code
     Cloud-->>Phone: pairing_code
-    Phone->>Box: POST /pair with code
+    Phone->>Box: Send pairing code to box
     Box->>Cloud: Redeem code
-    Cloud-->>Box: device token + tunnel
+    Cloud-->>Box: device token and tunnel
     Box-->>Phone: local_token
   end
 
   rect rgb(240, 238, 232)
-    Note over Phone,Cloud: 3 · Everyday use
-    Phone->>Box: API calls Bearer local_token
-    Box->>Cloud: Relay + public tunnel
+    Note over Phone,Cloud: 3. Everyday use
+    Phone->>Box: API calls with local_token
+    Box->>Cloud: Relay and public tunnel
   end
     </pre>
   </div>
