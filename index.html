@@ -10,12 +10,6 @@
       startOnLoad: true,
       theme: "neutral",
       securityLevel: "loose",
-      sequence: {
-        actorMargin: 48,
-        messageMargin: 40,
-        mirrorActors: false,
-        useMaxWidth: true,
-      },
     });
   </script>
   <style>
@@ -102,33 +96,27 @@
   <div class="diagram">
     <pre class="mermaid">
 sequenceDiagram
-  actor Phone as Phone
-  participant Box as AIOS Box
-  participant Cloud as aios-cloud
+  participant Phone
+  participant Device as AIOS Box
+  participant Cloud as aios cloud
 
-  rect rgb(230, 242, 239)
-    Note over Phone,Box: 1. Get the box online over Bluetooth
-    Box-->>Phone: Advertise BLE and WiFi list
-    Phone->>Box: Encrypted SSID and password
-    Box->>Box: Join WiFi
-    Box-->>Phone: LAN IP and provisioning key
-  end
+  note over Phone,Device: 1 Get the box online over Bluetooth
+  Device-->>Phone: Advertise BLE and WiFi list
+  Phone->>Device: Encrypted SSID and password
+  Device->>Device: Join WiFi
+  Device-->>Phone: LAN IP and provisioning key
 
-  rect rgb(247, 246, 243)
-    Note over Phone,Cloud: 2. Bind the box to the user account
-    Phone->>Cloud: Sign in and request pairing code
-    Cloud-->>Phone: pairing_code
-    Phone->>Box: Send pairing code to box
-    Box->>Cloud: Redeem code
-    Cloud-->>Box: device token and tunnel
-    Box-->>Phone: local_token
-  end
+  note over Phone,Cloud: 2 Bind the box to the user account
+  Phone->>Cloud: Sign in and request pairing code
+  Cloud-->>Phone: pairing_code
+  Phone->>Device: Send pairing code to box
+  Device->>Cloud: Redeem code
+  Cloud-->>Device: device token and tunnel
+  Device-->>Phone: local_token
 
-  rect rgb(240, 238, 232)
-    Note over Phone,Cloud: 3. Everyday use
-    Phone->>Box: API calls with local_token
-    Box->>Cloud: Relay and public tunnel
-  end
+  note over Phone,Cloud: 3 Everyday use
+  Phone->>Device: API calls with local_token
+  Device->>Cloud: Relay and public tunnel
     </pre>
   </div>
 
