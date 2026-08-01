@@ -221,7 +221,7 @@
         (with a remembered provisioning key), then binds to a user account through
         LAN + aios-cloud, and stays reachable via relay and Cloudflare Tunnel.
       </p>
-      <p class="updated">Updated Aug 1, 2026 · reflects remembered-key BLE v2, bluez-peripheral, LANIP/NETWORKS, factory-reset</p>
+      <p class="updated">Updated Aug 1, 2026 · remembered-key BLE v2 · phone client only · bluez-peripheral · LANIP/NETWORKS · factory-reset</p>
       <nav class="toc">
         <a href="#overview">Overview</a>
         <a href="#pipelines">Two pipelines</a>
@@ -239,13 +239,13 @@
       <h2>1. System overview</h2>
       <p class="caption">
         Three actors. Phone ↔ box over BLE for Wi‑Fi (and later reprovision).
-        Phone/desktop ↔ box over LAN HTTP for account pairing. Box ↔ cloud over
-        HTTPS claim + WSS relay. Off-LAN clients hit the box through Cloudflare Tunnel.
+        Phone ↔ box over LAN HTTP for account pairing. Box ↔ cloud over
+        HTTPS claim + WSS relay. Off-LAN the phone hits the box through Cloudflare Tunnel.
       </p>
       <div class="diagram">
         <pre class="mermaid">
 flowchart LR
-  subgraph Client["Phone / Desktop"]
+  subgraph Client["Phone · aios-mobile"]
     BLEC[BLE GATT client]
     LANC[LAN HTTP client]
     AUTH[Cloud auth + pairing UI]
@@ -422,7 +422,7 @@ stateDiagram-v2
         <pre class="mermaid">
 sequenceDiagram
   autonumber
-  participant App as Phone / Desktop
+  participant App as Phone
   participant Cloud as aios-cloud
   participant Box as AIOS Box
   participant CF as Cloudflare
@@ -451,13 +451,13 @@ sequenceDiagram
         <tbody>
           <tr>
             <td>Discover</td>
-            <td>App → Box</td>
+            <td>Phone → Box</td>
             <td>mDNS <code>_aios._tcp</code> / BLE <code>LANIP</code> / <code>GET /device/info</code></td>
             <td><code>{device_id, name, paired, slug}</code> — no owner PII</td>
           </tr>
           <tr>
             <td>Redeem</td>
-            <td>App → Box</td>
+            <td>Phone → Box</td>
             <td><code>POST /pair</code></td>
             <td><code>{pairing_code}</code></td>
           </tr>
@@ -534,7 +534,7 @@ sequenceDiagram
             <td><code>local_token</code></td>
             <td>Box</td>
             <td>Until unpair</td>
-            <td>App → box HTTP Bearer (LAN, tunnel, gateway)</td>
+            <td>Phone → box HTTP Bearer (LAN, tunnel, gateway)</td>
           </tr>
           <tr>
             <td><code>connector_token</code></td>
@@ -556,7 +556,7 @@ sequenceDiagram
       <div class="diagram">
         <pre class="mermaid">
 flowchart TB
-  App[Phone / Desktop]
+  App[Phone · aios-mobile]
   App -->|on LAN Bearer local_token| LAN["http://lan_ip:8765"]
   App -->|off LAN| Host["https://hostname"]
   Host --> CF[Cloudflare Tunnel]
@@ -646,7 +646,7 @@ flowchart TD
             <td>
               Phone BLE client + stored <code>provisioning_key</code> (<code>aios-mobile</code>),
               cloud pairing-code issuance, user auth / device registry,
-              Cloudflare edge, desktop/phone onboarding UI
+              Cloudflare edge, phone onboarding UI
             </td>
           </tr>
         </tbody>
