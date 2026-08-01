@@ -3,661 +3,139 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AIOS Pairing Architecture</title>
+  <title>AIOS Pairing</title>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
     mermaid.initialize({
       startOnLoad: true,
       theme: "neutral",
       securityLevel: "loose",
-      flowchart: { curve: "basis", htmlLabels: true },
-      sequence: { actorMargin: 28, messageMargin: 36 },
+      sequence: {
+        actorMargin: 48,
+        messageMargin: 40,
+        mirrorActors: false,
+        useMaxWidth: true,
+      },
     });
   </script>
   <style>
     :root {
       --bg: #f7f6f3;
-      --surface: #ffffff;
       --ink: #1a1a18;
       --muted: #5c5a54;
       --line: #ddd9cf;
+      --surface: #ffffff;
       --accent: #0f5c4c;
-      --accent-soft: #e6f2ef;
-      --warn: #7a4a12;
-      --warn-soft: #f5eadc;
-      --code: #f0eee8;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      --sans: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
       --ui: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+      --sans: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
     }
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
     body {
       margin: 0;
+      min-height: 100vh;
       background: var(--bg);
       color: var(--ink);
       font-family: var(--ui);
-      line-height: 1.55;
-    }
-    .wrap {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 48px 24px 96px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 72px;
     }
     header {
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 28px;
-      margin-bottom: 36px;
+      max-width: 720px;
+      width: 100%;
+      margin-bottom: 32px;
+      text-align: center;
     }
     .brand {
-      font-size: 13px;
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--accent);
-      font-weight: 700;
-      margin: 0 0 10px;
     }
     h1 {
+      margin: 0 0 10px;
       font-family: var(--sans);
-      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-size: clamp(1.75rem, 3.5vw, 2.35rem);
       font-weight: 600;
-      line-height: 1.15;
-      margin: 0 0 12px;
       letter-spacing: -0.02em;
     }
     .lede {
+      margin: 0 auto;
+      max-width: 32rem;
       color: var(--muted);
       font-size: 1.05rem;
-      max-width: 44rem;
-      margin: 0;
-    }
-    .updated {
-      margin-top: 14px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    nav.toc {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 28px 0 0;
-    }
-    nav.toc a {
-      text-decoration: none;
-      color: var(--ink);
-      background: var(--surface);
-      border: 1px solid var(--line);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-    }
-    nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
-    section { margin: 48px 0; }
-    h2 {
-      font-family: var(--sans);
-      font-size: 1.55rem;
-      margin: 0 0 8px;
-      letter-spacing: -0.015em;
-    }
-    h3 {
-      font-family: var(--sans);
-      font-size: 1.15rem;
-      margin: 28px 0 8px;
-    }
-    p.caption {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin: 0 0 18px;
-      max-width: 46rem;
-    }
-    .callout {
-      background: var(--accent-soft);
-      border-left: 3px solid var(--accent);
-      padding: 14px 16px;
-      margin: 16px 0 24px;
-      font-size: 0.95rem;
-    }
-    .callout.warn {
-      background: var(--warn-soft);
-      border-left-color: var(--warn);
+      line-height: 1.5;
     }
     .diagram {
+      width: 100%;
+      max-width: 900px;
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 20px 16px;
+      border-radius: 12px;
+      padding: 36px 24px 28px;
       overflow-x: auto;
-      margin: 12px 0 8px;
     }
     .diagram .mermaid { display: flex; justify-content: center; }
-    pre.ascii {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 18px 20px;
-      overflow-x: auto;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.45;
-      margin: 12px 0;
-      white-space: pre;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      overflow: hidden;
-      font-size: 0.92rem;
-      margin: 12px 0 8px;
-    }
-    th, td {
-      text-align: left;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
-      vertical-align: top;
-    }
-    th {
-      background: #efeee9;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    .caption {
+      max-width: 720px;
+      margin: 24px 0 0;
       color: var(--muted);
-    }
-    tr:last-child td { border-bottom: none; }
-    code {
-      font-family: var(--mono);
-      font-size: 0.86em;
-      background: var(--code);
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 720px) {
-      .grid-2 { grid-template-columns: 1fr; }
-    }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 16px 18px;
-    }
-    .card h3 { margin-top: 0; }
-    .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
-    .pill {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      margin-bottom: 8px;
-    }
-    footer {
-      margin-top: 64px;
-      padding-top: 20px;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.85rem;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <p class="brand">AIOS · mini-aios</p>
-      <h1>Bluetooth &amp; Account Pairing Architecture</h1>
-      <p class="lede">
-        End-to-end map of how an offline AIOS box gets onto Wi‑Fi via encrypted BLE
-        (with a remembered provisioning key), then binds to a user account through
-        LAN + aios-cloud, and stays reachable via relay and Cloudflare Tunnel.
-      </p>
-      <p class="updated">Updated Aug 1, 2026 · remembered-key BLE v2 · phone client only · bluez-peripheral · LANIP/NETWORKS · factory-reset</p>
-      <nav class="toc">
-        <a href="#overview">Overview</a>
-        <a href="#pipelines">Two pipelines</a>
-        <a href="#ble">BLE Wi‑Fi</a>
-        <a href="#claim-vs-reprovision">Claim vs reprovision</a>
-        <a href="#pair">Account pairing</a>
-        <a href="#tokens">Tokens</a>
-        <a href="#runtime">Runtime</a>
-        <a href="#reset">Unpair vs reset</a>
-        <a href="#storyboard">Storyboard</a>
-      </nav>
-    </header>
+  <header>
+    <p class="brand">AIOS · mini-aios</p>
+    <h1>How pairing works</h1>
+    <p class="lede">
+      Phone puts the box on Wi‑Fi over Bluetooth, then binds it to the user
+      through aios-cloud.
+    </p>
+  </header>
 
-    <section id="overview">
-      <h2>1. System overview</h2>
-      <p class="caption">
-        Three actors. Phone ↔ box over BLE for Wi‑Fi (and later reprovision).
-        Phone ↔ box over LAN HTTP for account pairing. Box ↔ cloud over
-        HTTPS claim + WSS relay. Off-LAN the phone hits the box through Cloudflare Tunnel.
-      </p>
-      <div class="diagram">
-        <pre class="mermaid">
-flowchart LR
-  subgraph Client["Phone · aios-mobile"]
-    BLEC[BLE GATT client]
-    LANC[LAN HTTP client]
-    AUTH[Cloud auth + pairing UI]
-    KEY[(stored provisioning_key)]
-  end
-
-  subgraph Box["AIOS Box · mini-aios"]
-    PROV["provisioning.py<br/>bluez-peripheral GATT"]
-    CRYPTO[provisioning_crypto.py]
-    API[server.py :8765]
-    PAIR[pairing.py]
-    MDNS[discovery.py mDNS]
-    RELAY[relay_client.py]
-    TUN[tunnel.py cloudflared]
-    DB[(device_identity · device_link · provisioning_secret)]
-  end
-
-  subgraph Cloud["aios-cloud · computer.trywink.io"]
-    CLAIM["/device/claim/*"]
-    WS["/ws/device relay"]
-    CF[Cloudflare Tunnel]
-  end
-
-  BLEC <-- BLE GATT --> PROV
-  KEY -.-> BLEC
-  PROV --- CRYPTO
-  PROV --- DB
-  LANC <-- LAN HTTP --> API
-  AUTH --> CLAIM
-  API --> PAIR
-  PAIR -->|HTTPS claim/complete| CLAIM
-  MDNS -.->|mDNS _aios._tcp| LANC
-  PROV -.->|LANIP char| BLEC
-  RELAY <-->|WSS| WS
-  TUN --> CF
-  LANC -.->|HTTPS off-LAN| CF
-  API --- DB
-  PAIR --- DB
-        </pre>
-      </div>
-    </section>
-
-    <section id="pipelines">
-      <h2>2. Two pipelines — do not conflate</h2>
-      <div class="callout warn">
-        BLE “claim” is <strong>Wi‑Fi / crypto identity</strong> (mint <code>provisioning_key</code>).
-        Account claim is <code>POST /pair</code> → cloud <code>/device/claim/complete</code>.
-        Unpairing an account does <strong>not</strong> wipe the provisioning key.
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Pipeline</th>
-            <th>Channel</th>
-            <th>Purpose</th>
-            <th>When</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>A — BLE Wi‑Fi provisioning</strong></td>
-            <td>Bluetooth LE GATT + app-layer crypto (<code>bluez-peripheral</code>)</td>
-            <td>Get box online; remember phone↔box key for moves</td>
-            <td>Boot offline, or <code>AIOS_FORCE_PROVISIONING</code> / factory-reset</td>
-          </tr>
-          <tr>
-            <td><strong>B — Account pairing</strong></td>
-            <td>mDNS / BLE LANIP + LAN HTTP + cloud HTTPS/WSS + tunnel</td>
-            <td>Bind box to a user account</td>
-            <td>After box is online</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section id="ble">
-      <h2>3. Pipeline A — BLE Wi‑Fi provisioning</h2>
-      <p class="caption">
-        Transport is plain BLE. Security is in the payload: X25519 ECDH + HKDF + AES-256-GCM
-        on first claim; afterwards the shared <code>provisioning_key</code> seals new Wi‑Fi creds
-        with no ECDH. Stack: <code>bluez-peripheral</code> (not bless). Prefers USB dongle over Jetson onboard MAC.
-      </p>
-
-      <h3>GATT surface</h3>
-      <pre class="ascii">Service  7A71E000-1111-2222-3333-123456789ABC
-├── CREDS       …E001  write   ← {"mode":"claim"|"reprovision","phonePub"?,"blob"}
-├── STATUS      …E002  notify → credentials_received | connecting | connected | failed:&lt;reason&gt;
-├── PUBKEY      …E003  read   → box ephemeral X25519 pubkey (hex) [first claim]
-├── CHALLENGE   …E004  read   → fresh 16-byte nonce (hex), regenerated every read
-├── DEVICE_INFO …E005  read   → {"device_id","claimed":bool,"slug"}
-├── KEYOUT      …E006  read   → provisioning_key sealed under session key [first claim]
-├── LANIP       …E007  read   → box LAN IPv4 once joined (skip mDNS for /pair)
-└── NETWORKS    …E008  read   → [[ssid, signal, secure01], …] visible Wi‑Fi list</pre>
-
-      <h3>First claim sequence</h3>
-      <div class="diagram">
-        <pre class="mermaid">
+  <div class="diagram">
+    <pre class="mermaid">
 sequenceDiagram
-  autonumber
-  participant Phone as Phone
-  participant BLE as Box BLE GATT
-  participant NM as nmcli
-  participant DB as provisioning_secret
-
-  Note over BLE: wipe stale bonds · NoIoAgent · prefer USB dongle
-  BLE->>BLE: scan WiFi → NETWORKS
-  Phone->>BLE: Read DEVICE_INFO claimed=false
-  Phone->>BLE: Read NETWORKS, PUBKEY, CHALLENGE
-  Note over Phone: ECDH → HKDF aios-provisioning-v2 → AES-GCM<br/>AAD = challenge
-  Phone->>BLE: Write CREDS mode=claim phonePub blob
-  BLE-->>Phone: STATUS credentials_received → connecting
-  BLE->>NM: wifi connect ssid password
-  BLE->>DB: mint + store provisioning_key
-  BLE-->>Phone: KEYOUT sealed key · LANIP · STATUS connected
-  Note over Phone,BLE: phone persists provisioning_key
-  BLE->>BLE: sleep 2.5s · tear down GATT · FastAPI starts
-        </pre>
-      </div>
-    </section>
-
-    <section id="claim-vs-reprovision">
-      <h2>4. Claim vs reprovision</h2>
-      <div class="grid-2">
-        <div class="card">
-          <div class="pill">mode=claim</div>
-          <h3>First time / factory-reset</h3>
-          <p>
-            Box has no stored key. Phone does ECDH with <code>PUBKEY</code>, writes
-            <code>phonePub</code> + sealed blob. Box mints <code>provisioning_key</code>,
-            exposes it on <code>KEYOUT</code>. Both sides persist it.
-          </p>
-        </div>
-        <div class="card">
-          <div class="pill">mode=reprovision</div>
-          <h3>Moved to a new network</h3>
-          <p>
-            Phone matches <code>device_id</code> via <code>DEVICE_INFO</code>, loads stored
-            <code>provisioning_key</code>, encrypts new SSID/password with it (no ECDH /
-            no <code>phonePub</code>). Box rejects with <code>failed:not_claimed</code> if no key.
-            Does <strong>not</strong> remint KEYOUT.
-          </p>
-        </div>
-      </div>
-
-      <h3>BLE state machine</h3>
-      <div class="diagram">
-        <pre class="mermaid">
-stateDiagram-v2
-  [*] --> ADVERTISING
-  ADVERTISING --> CREDENTIALS_RECEIVED: CREDS decrypt OK
-  ADVERTISING --> ADVERTISING: bad_payload / bad_mode / auth / not_claimed
-  CREDENTIALS_RECEIVED --> CONNECTING: nmcli start
-  CONNECTING --> CONNECTED: online · set LANIP · maybe KEYOUT
-  CONNECTING --> ADVERTISING: failed incorrect_password / network_not_found / …
-  CONNECTED --> [*]: hold 2.5s for KEYOUT/LANIP reads → stop BLE → FastAPI
-        </pre>
-      </div>
-      <p class="caption">
-        Failure STATUS reasons include <code>failed:bad_payload</code>, <code>failed:bad_mode</code>,
-        <code>failed:not_claimed</code>, <code>failed:auth</code>, <code>failed:incorrect_password</code>,
-        <code>failed:network_not_found</code>, or truncated nmcli error.
-      </p>
-    </section>
-
-    <section id="pair">
-      <h2>5. Pipeline B — Account pairing</h2>
-      <p class="caption">
-        After Wi‑Fi, the app finds the box via mDNS, BLE <code>LANIP</code>, or cloud-reported
-        <code>lan_ip</code> from the relay heartbeat. It hands a short-lived pairing code over
-        the LAN; the box redeems it with the cloud and mints <code>local_token</code>.
-      </p>
-
-      <div class="diagram">
-        <pre class="mermaid">
-sequenceDiagram
-  autonumber
-  participant App as Phone
-  participant Cloud as aios-cloud
+  actor Phone as Phone
   participant Box as AIOS Box
-  participant CF as Cloudflare
+  participant Cloud as aios-cloud
 
-  Note over Box: Online: mDNS + GET /device/info · maybe already has LANIP from BLE
-  App->>Cloud: Auth + request pairing_code
-  Cloud-->>App: short-lived pairing_code
-  App->>Box: Discover mDNS or BLE LANIP or cloud lan_ip
-  App->>Box: POST /pair pairing_code
-  Box->>Cloud: POST /device/claim/complete
-  Cloud-->>Box: device_token user slug connector_token hostname
-  Note over Box: mint local_token · save device_link · start cloudflared
-  Box-->>App: local_token device_id slug hostname
-  App->>App: Store local_token
-  Box->>Cloud: WSS /ws/device?token=device_token
-  Box->>CF: cloudflared tunnel run
-  Note over App,Box: Bearer local_token over LAN or public hostname
-        </pre>
-      </div>
+  rect rgb(230, 242, 239)
+    Note over Phone,Box: 1 · Get the box online Bluetooth
+    Box-->>Phone: Advertise BLE + Wi‑Fi list
+    Phone->>Box: Encrypted SSID + password
+    Box->>Box: Join Wi‑Fi
+    Box-->>Phone: LAN IP + provisioning key
+  end
 
-      <h3>Key APIs</h3>
-      <table>
-        <thead>
-          <tr><th>Step</th><th>Direction</th><th>Endpoint</th><th>Payload</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Discover</td>
-            <td>Phone → Box</td>
-            <td>mDNS <code>_aios._tcp</code> / BLE <code>LANIP</code> / <code>GET /device/info</code></td>
-            <td><code>{device_id, name, paired, slug}</code> — no owner PII</td>
-          </tr>
-          <tr>
-            <td>Redeem</td>
-            <td>Phone → Box</td>
-            <td><code>POST /pair</code></td>
-            <td><code>{pairing_code}</code></td>
-          </tr>
-          <tr>
-            <td>Claim</td>
-            <td>Box → Cloud</td>
-            <td><code>POST /device/claim/complete</code></td>
-            <td><code>{device_id, pairing_code}</code></td>
-          </tr>
-          <tr>
-            <td>Claim OK</td>
-            <td>Cloud → Box</td>
-            <td>200</td>
-            <td><code>device_token, user, slug, connector_token?, hostname?</code></td>
-          </tr>
-          <tr>
-            <td>Pair OK</td>
-            <td>Box → App</td>
-            <td>200</td>
-            <td><code>local_token, device_id, slug, hostname, …</code></td>
-          </tr>
-          <tr>
-            <td>Relay</td>
-            <td>Box → Cloud</td>
-            <td><code>WSS /ws/device?token=…</code></td>
-            <td>heartbeat <code>{type, lan_ip}</code> + <code>ping</code>/<code>unpair</code></td>
-          </tr>
-          <tr>
-            <td>Tunnel</td>
-            <td>Box → CF</td>
-            <td><code>cloudflared</code></td>
-            <td>public hostname → <code>:8765</code></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+  rect rgb(247, 246, 243)
+    Note over Phone,Cloud: 2 · Bind the box to the user account
+    Phone->>Cloud: Sign in · request pairing code
+    Cloud-->>Phone: pairing_code
+    Phone->>Box: POST /pair with code
+    Box->>Cloud: Redeem code
+    Cloud-->>Box: device token + tunnel
+    Box-->>Phone: local_token
+  end
 
-    <section id="tokens">
-      <h2>6. Tokens &amp; identity</h2>
-      <p class="caption">
-        Four auth planes: BLE session crypto (first claim), <code>provisioning_key</code>
-        (Wi‑Fi moves), <code>local_token</code> (app↔box HTTP), <code>device_token</code> (box↔cloud WSS).
-      </p>
-      <table>
-        <thead>
-          <tr><th>Artifact</th><th>Who mints</th><th>Lifetime</th><th>Used for</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>device_id</code></td>
-            <td>Box (SQLite)</td>
-            <td>Forever (survives factory-reset)</td>
-            <td>BLE name, DEVICE_INFO, mDNS TXT, claim</td>
-          </tr>
-          <tr>
-            <td><code>provisioning_key</code></td>
-            <td>Box on first BLE claim</td>
-            <td>Until factory-reset</td>
-            <td>Re-encrypt Wi‑Fi on move; <strong>not</strong> account auth</td>
-          </tr>
-          <tr>
-            <td><code>pairing_code</code></td>
-            <td>Cloud</td>
-            <td>Short / one-shot</td>
-            <td>Bind box ↔ user</td>
-          </tr>
-          <tr>
-            <td><code>device_token</code></td>
-            <td>Cloud</td>
-            <td>Until unpair</td>
-            <td>Box → cloud WSS</td>
-          </tr>
-          <tr>
-            <td><code>local_token</code></td>
-            <td>Box</td>
-            <td>Until unpair</td>
-            <td>Phone → box HTTP Bearer (LAN, tunnel, gateway)</td>
-          </tr>
-          <tr>
-            <td><code>connector_token</code></td>
-            <td>Cloud</td>
-            <td>Until unpair</td>
-            <td>cloudflared</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section id="runtime">
-      <h2>7. Post-pair runtime topology</h2>
-      <p class="caption">
-        Same <code>local_token</code> works on LAN and through the tunnel. Chat is HTTP+SSE
-        (<code>/message</code>) + gateway sessions — the box no longer exposes a local <code>/ws</code>.
-        Cloud can still push <code>unpair</code> over the outbound relay.
-      </p>
-      <div class="diagram">
-        <pre class="mermaid">
-flowchart TB
-  App[Phone · aios-mobile]
-  App -->|on LAN Bearer local_token| LAN["http://lan_ip:8765"]
-  App -->|off LAN| Host["https://hostname"]
-  Host --> CF[Cloudflare Tunnel]
-  LAN --> API[AIOS Box API · server.py]
-  CF --> API
-  API --> Auth[auth.py · require_local_token]
-  Auth --> Cmds["/command /message SSE /chats gateway /sessions"]
-  API --> Relay[relay_client WSS]
-  API --> Tun[cloudflared]
-  Relay -->|heartbeat lan_ip · unpair| Cloud[aios-cloud]
-  Tun --> CF
-        </pre>
-      </div>
-    </section>
-
-    <section id="reset">
-      <h2>8. Unpair vs factory-reset</h2>
-      <table>
-        <thead>
-          <tr><th>Path</th><th>Auth</th><th>Clears</th><th>Keeps</th><th>Side effect</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>POST /unpair</code></td>
-            <td><code>local_token</code> or relay <code>unpair</code></td>
-            <td><code>device_link</code>, tunnel</td>
-            <td><code>device_id</code>, <code>provisioning_key</code></td>
-            <td>Fast LAN re-pair; phone can still reprovision Wi‑Fi</td>
-          </tr>
-          <tr>
-            <td><code>POST /factory-reset</code></td>
-            <td><code>local_token</code></td>
-            <td><code>device_link</code> + <code>provisioning_key</code></td>
-            <td><code>device_id</code> only</td>
-            <td>Sets <code>AIOS_FORCE_PROVISIONING=1</code>, <code>os.execv</code> relaunch → fresh BLE claim</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h3>Account pairing state machine</h3>
-      <div class="diagram">
-        <pre class="mermaid">
-stateDiagram-v2
-  [*] --> UNPAIRED
-  UNPAIRED --> PAIRING: POST /pair
-  PAIRING --> PAIRED: claim OK · mint local_token · tunnel + WSS
-  PAIRING --> UNPAIRED: claim failed
-  PAIRED --> UNPAIRED: POST /unpair or relay unpair
-  PAIRED --> BLE_CLAIM: POST /factory-reset
-  BLE_CLAIM --> UNPAIRED: relaunch · wipe provisioning_key · force BLE
-        </pre>
-      </div>
-    </section>
-
-    <section id="storyboard">
-      <h2>9. Boot → pair storyboard</h2>
-      <p class="caption">Offline → online → claimed. BLE gets you on the network (and remembers the phone); pairing code binds ownership; tokens unlock ongoing control.</p>
-      <div class="diagram">
-        <pre class="mermaid">
-flowchart TD
-  A["① Fresh box powers on, no Wi‑Fi"] --> B["② BLE advertises aios-id[:8] via bluez-peripheral"]
-  B --> C["③ Phone claim: ECDH seal SSID/password · box joins · KEYOUT + LANIP"]
-  C --> D["④ FastAPI starts · mDNS _aios._tcp :8765"]
-  D --> E["⑤ User signs in · cloud issues pairing_code"]
-  E --> F["⑥ App finds box mDNS or LANIP · POST /pair"]
-  F --> G["⑦ Box redeems with cloud · stores tokens · tunnel + relay"]
-  G --> H["⑧ App uses Bearer local_token on LAN or public hostname"]
-  H --> I["⑨ Later move: phone reprovision with stored provisioning_key"]
-        </pre>
-      </div>
-
-      <h3>What lives where</h3>
-      <table>
-        <thead>
-          <tr><th>In mini-aios (box)</th><th>External</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <code>main.py</code> boot gate,
-              <code>provisioning.py</code> (bluez-peripheral),
-              <code>provisioning_crypto.py</code>,
-              <code>pairing.py</code>,
-              <code>server.py</code> (<code>/pair</code>, <code>/unpair</code>, <code>/factory-reset</code>),
-              <code>relay_client.py</code>, <code>tunnel.py</code>, <code>auth.py</code>, <code>discovery.py</code>
-            </td>
-            <td>
-              Phone BLE client + stored <code>provisioning_key</code> (<code>aios-mobile</code>),
-              cloud pairing-code issuance, user auth / device registry,
-              Cloudflare edge, phone onboarding UI
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <footer>
-      Generated from the mini-aios box codebase.
-      BLE stack: <code>bluez-peripheral</code> on Linux/BlueZ.
-      Cloud default: <code>https://computer.trywink.io</code>.
-    </footer>
+  rect rgb(240, 238, 232)
+    Note over Phone,Cloud: 3 · Everyday use
+    Phone->>Box: API calls Bearer local_token
+    Box->>Cloud: Relay + public tunnel
+  end
+    </pre>
   </div>
+
+  <p class="caption">
+    Bluetooth never carries account tokens — only Wi‑Fi credentials.
+    Later, if the box moves networks, the phone reuses the stored provisioning key
+    (no fresh ECDH). Unpair drops the account link; factory-reset also wipes that key.
+  </p>
 </body>
 </html>
