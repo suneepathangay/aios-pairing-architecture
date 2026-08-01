@@ -58,14 +58,14 @@
     }
     .lede {
       margin: 0 auto;
-      max-width: 32rem;
+      max-width: 34rem;
       color: var(--muted);
       font-size: 1.05rem;
       line-height: 1.5;
     }
     .diagram {
       width: 100%;
-      max-width: 900px;
+      max-width: 960px;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -88,8 +88,8 @@
     <p class="brand">AIOS · mini-aios</p>
     <h1>How pairing works</h1>
     <p class="lede">
-      Phone puts the box on Wi‑Fi over Bluetooth, then binds it to the user
-      through aios-cloud.
+      User signs in with Supabase, phone puts the box on Wi‑Fi over Bluetooth,
+      then binds it to that account through aios-cloud.
     </p>
   </header>
 
@@ -97,33 +97,38 @@
     <pre class="mermaid">
 sequenceDiagram
   participant Phone
+  participant Supabase
   participant Device as AIOS Box
   participant Cloud as aios cloud
 
-  note over Phone,Device: 1 Get the box online over Bluetooth
+  note over Phone,Supabase: 1 Sign in
+  Phone->>Supabase: Authenticate user
+  Supabase-->>Phone: Session JWT
+
+  note over Phone,Device: 2 Get the box online over Bluetooth
   Device-->>Phone: Advertise BLE and WiFi list
   Phone->>Device: Encrypted SSID and password
   Device->>Device: Join WiFi
   Device-->>Phone: LAN IP and provisioning key
 
-  note over Phone,Cloud: 2 Bind the box to the user account
-  Phone->>Cloud: Sign in and request pairing code
+  note over Phone,Cloud: 3 Bind the box to the user account
+  Phone->>Cloud: Request pairing code with JWT
   Cloud-->>Phone: pairing_code
   Phone->>Device: Send pairing code to box
   Device->>Cloud: Redeem code
   Cloud-->>Device: device token and tunnel
   Device-->>Phone: local_token
 
-  note over Phone,Cloud: 3 Everyday use
+  note over Phone,Cloud: 4 Everyday use
   Phone->>Device: API calls with local_token
   Device->>Cloud: Relay and public tunnel
     </pre>
   </div>
 
   <p class="caption">
+    Supabase auth happens first so aios-cloud knows which user owns the pairing code.
     Bluetooth never carries account tokens — only Wi‑Fi credentials.
-    Later, if the box moves networks, the phone reuses the stored provisioning key
-    (no fresh ECDH). Unpair drops the account link; factory-reset also wipes that key.
+    Unpair drops the account link; factory-reset also wipes the provisioning key.
   </p>
 </body>
 </html>
