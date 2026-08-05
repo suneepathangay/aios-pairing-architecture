@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AIOS Pairing</title>
+  <title>AIOS iOS Setup</title>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
     mermaid.initialize({
       startOnLoad: true,
       theme: "neutral",
       securityLevel: "loose",
+      flowchart: { curve: "basis", htmlLabels: true, nodeSpacing: 24, rankSpacing: 36 },
     });
   </script>
   <style>
@@ -36,9 +37,9 @@
       padding: 48px 20px 72px;
     }
     header {
-      max-width: 720px;
+      max-width: 760px;
       width: 100%;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
       text-align: center;
     }
     .brand {
@@ -58,24 +59,38 @@
     }
     .lede {
       margin: 0 auto;
-      max-width: 34rem;
+      max-width: 36rem;
       color: var(--muted);
       font-size: 1.05rem;
       line-height: 1.5;
     }
-    .diagram {
+    .panel {
       width: 100%;
-      max-width: 960px;
+      max-width: 980px;
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 36px 24px 28px;
+      padding: 28px 20px 20px;
       overflow-x: auto;
+      margin-bottom: 16px;
     }
-    .diagram .mermaid { display: flex; justify-content: center; }
+    .panel h2 {
+      margin: 0 0 6px;
+      text-align: center;
+      font-family: var(--sans);
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+    .panel .sub {
+      margin: 0 0 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .panel .mermaid { display: flex; justify-content: center; }
     .caption {
-      max-width: 720px;
-      margin: 24px 0 0;
+      max-width: 760px;
+      margin: 8px 0 0;
       color: var(--muted);
       font-size: 0.95rem;
       line-height: 1.55;
@@ -86,49 +101,77 @@
 <body>
   <header>
     <p class="brand">AIOS · mini-aios</p>
-    <h1>How pairing works</h1>
+    <h1>iOS · device · cloud setup</h1>
     <p class="lede">
-      User signs in with Supabase, phone puts the box on Wi‑Fi over Bluetooth,
-      then binds it to that account through aios-cloud.
+      How the iPhone, AIOS box, Supabase, and aios-cloud fit together —
+      from first sign-in to using the box from anywhere.
     </p>
   </header>
 
-  <div class="diagram">
+  <div class="panel">
+    <h2>System map</h2>
+    <p class="sub">Who talks to whom</p>
+    <pre class="mermaid">
+flowchart LR
+  iOS[iPhone app]
+  SB[Supabase Auth]
+  Device[AIOS Box]
+  Cloud[aios cloud]
+  CF[Cloudflare Tunnel]
+
+  iOS -->|sign in| SB
+  iOS -->|Bluetooth WiFi setup| Device
+  iOS -->|pairing code on LAN| Device
+  iOS -->|auth and claim APIs| Cloud
+  Device -->|claim complete| Cloud
+  Device -->|WSS relay| Cloud
+  Device --> CF
+  iOS -->|later from anywhere| CF
+  CF --> Device
+    </pre>
+  </div>
+
+  <div class="panel">
+    <h2>Setup sequence</h2>
+    <p class="sub">What happens in order</p>
     <pre class="mermaid">
 sequenceDiagram
-  participant Phone
-  participant Supabase
+  participant iOS as iPhone
+  participant SB as Supabase
   participant Device as AIOS Box
   participant Cloud as aios cloud
+  participant CF as Cloudflare
 
-  note over Phone,Supabase: 1 Sign in
-  Phone->>Supabase: Authenticate user
-  Supabase-->>Phone: Session JWT
+  note over iOS,SB: 1 Sign in
+  iOS->>SB: Authenticate user
+  SB-->>iOS: Session JWT
 
-  note over Phone,Device: 2 Get the box online over Bluetooth
-  Device-->>Phone: Advertise BLE and WiFi list
-  Phone->>Device: Encrypted SSID and password
+  note over iOS,Device: 2 Put the box on WiFi over Bluetooth
+  Device-->>iOS: Advertise BLE and WiFi list
+  iOS->>Device: Encrypted SSID and password
   Device->>Device: Join WiFi
-  Device-->>Phone: LAN IP and provisioning key
+  Device-->>iOS: LAN IP and provisioning key
 
-  note over Phone,Cloud: 3 Bind the box to the user account
-  Phone->>Cloud: Request pairing code with JWT
-  Cloud-->>Phone: pairing_code
-  Phone->>Device: Send pairing code to box
+  note over iOS,Cloud: 3 Bind the box to the account
+  iOS->>Cloud: Request pairing code with JWT
+  Cloud-->>iOS: pairing_code
+  iOS->>Device: Send pairing code on LAN
   Device->>Cloud: Redeem code
-  Cloud-->>Device: device token and tunnel
-  Device-->>Phone: local_token
+  Cloud-->>Device: device token and tunnel token
+  Device->>CF: Start public tunnel
+  Device-->>iOS: local_token
 
-  note over Phone,Cloud: 4 Everyday use
-  Phone->>Device: API calls with local_token
-  Device->>Cloud: Relay and public tunnel
+  note over iOS,CF: 4 Use the box
+  iOS->>Device: On same WiFi with local_token
+  iOS->>CF: From anywhere with local_token
+  CF->>Device: Forward to box
+  Device->>Cloud: Relay heartbeat and remote commands
     </pre>
   </div>
 
   <p class="caption">
-    Supabase auth happens first so aios-cloud knows which user owns the pairing code.
-    Bluetooth never carries account tokens — only Wi‑Fi credentials.
-    Unpair drops the account link; factory-reset also wipes the provisioning key.
+    Bluetooth only carries Wi‑Fi credentials. Account bind currently needs the
+    phone on the same LAN as the box. After that, Cloudflare Tunnel covers off-network use.
   </p>
 </body>
 </html>
